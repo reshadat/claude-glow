@@ -1,0 +1,14 @@
+{
+  "device_id": "REPLACE_WITH_DEVICE_ID",
+  "local_key": "REPLACE_WITH_LOCAL_KEY",
+  "ip": "REPLACE_WITH_BULB_IP",
+  "protocol_version": 3.3,
+  "socket_timeout": 1.5,
+  "colors": {
+    "idle":      { "h": 120, "s": 100, "v": 15 },
+    "thinking":  { "h": 35,  "s": 100, "v": 60 },
+    "tool-done": { "h": 210, "s": 100, "v": 50 },
+    "waiting":   { "h": 0,   "s": 100, "v": 100 },
+    "error":     { "h": 0,   "s": 100, "v": 70 }
+  }
+}
