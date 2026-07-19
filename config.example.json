@@ -10,5 +10,10 @@
     "tool-done": { "h": 210, "s": 100, "v": 50 },
     "waiting":   { "h": 0,   "s": 100, "v": 100 },
     "error":     { "h": 0,   "s": 100, "v": 70 }
+  },
+  "pulse": {
+    "interval": 0.4,
+    "max_seconds": 300,
+    "dim_percent": 20
   }
 }

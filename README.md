@@ -105,6 +105,8 @@ There is no built-in error hook event in Claude Code, so the `error` state is th
 
 `protocol_version` is 3.3 for most Halonix bulbs. If commands silently do nothing, try 3.4 or 3.5 (the tinytuya wizard's devices.json shows the right version). `socket_timeout` caps how long a hook can block on an unreachable bulb.
 
+The optional `pulse` block tunes the waiting-state pulse. `interval` is seconds per half-pulse (dim or bright, floor 0.2). `max_seconds` caps how long the background pulser runs before settling on solid bright, so an abandoned session cannot strobe all night. `dim_percent` sets the dim phase as a percentage of the state's brightness. Defaults: 0.4, 300, 20.
+
 ## Troubleshooting
 
 Bulb does nothing, no error: wrong protocol_version, or another app holds the bulb's single local connection. Close the Tuya app.

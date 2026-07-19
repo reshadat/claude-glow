@@ -155,17 +155,28 @@ def start_pulser():
         f.write(str(proc.pid))
 
 
-def do_pulse_loop(bulb, color):
+def pulse_settings(cfg):
+    """Pulse tuning from config.json's optional "pulse" block."""
+    p = cfg.get("pulse") or {}
+    interval = max(0.2, float(p.get("interval", 0.4)))
+    max_seconds = max(1, int(p.get("max_seconds", PULSE_MAX_SECONDS)))
+    dim_percent = max(1, min(100, int(p.get("dim_percent", 20))))
+    return interval, max_seconds, dim_percent
+
+
+def do_pulse_loop(bulb, cfg, color):
     """Continuous dim/bright pulse until killed by the next state change,
-    capped at PULSE_MAX_SECONDS so an abandoned session can't strobe all night.
-    Ends bright so a timed-out pulse still leaves the 'come look' color."""
-    dim = dict(color, v=max(10, int(color["v"]) // 5))
-    deadline = time.time() + PULSE_MAX_SECONDS
+    capped at pulse.max_seconds so an abandoned session can't strobe all
+    night. Ends bright so a timed-out pulse still leaves the 'come look'
+    color."""
+    interval, max_seconds, dim_percent = pulse_settings(cfg)
+    dim = dict(color, v=max(10, int(color["v"]) * dim_percent // 100))
+    deadline = time.time() + max_seconds
     while time.time() < deadline:
         set_color(bulb, dim)
-        time.sleep(0.4)
+        time.sleep(interval)
         set_color(bulb, color)
-        time.sleep(0.4)
+        time.sleep(interval)
 
 
 def do_waiting(bulb, color):
@@ -255,7 +266,7 @@ def main():
         elif state == "waiting":
             do_waiting(bulb, get_color(cfg, state))
         elif state == "_pulse":
-            do_pulse_loop(bulb, get_color(cfg, "waiting"))
+            do_pulse_loop(bulb, cfg, get_color(cfg, "waiting"))
         else:
             set_color(bulb, get_color(cfg, state))
     except Exception as e:
