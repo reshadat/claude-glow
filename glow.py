@@ -113,17 +113,31 @@ def set_color(bulb, color):
 
 
 def kill_pulser():
-    """Stop a background pulser from a previous 'waiting' state, if any."""
+    """Stop a background pulser from a previous 'waiting' state, if any.
+
+    Tuya bulbs accept a single local TCP connection, so we must wait for the
+    pulser to actually die (freeing the bulb's slot) before the caller
+    connects, or the next color command is silently lost."""
+    pid = None
     try:
         with open(PIDFILE) as f:
             pid = int(f.read().strip())
         os.kill(pid, signal.SIGTERM)
     except (OSError, ValueError):
-        pass
+        pid = None
     try:
         os.remove(PIDFILE)
     except OSError:
         pass
+    if pid is None:
+        return
+    for _ in range(20):  # up to 2s for the process to exit
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            break
+        time.sleep(0.1)
+    time.sleep(0.3)  # let the bulb notice the closed socket
 
 
 def start_pulser():
