@@ -28,14 +28,16 @@ You need three things per bulb: `device_id`, `local_key`, and its LAN `ip`.
 
 The local_key lives in the Tuya cloud, so you extract it once through a free developer account.
 
-1. Pair the bulb with the Smart Life app (or the Halonix app, both register the device on Tuya's backend).
-2. Create a free account at https://iot.tuya.com and create a Cloud project (Smart Home type). Pick the India data center if your app account is Indian.
-3. In the project, enable the core APIs (IoT Core, Authorization) and link your app account: Devices tab, Link Tuya App Account, scan the QR code from the Smart Life app (Me, top-right scan icon).
-4. Note the project's Access ID and Access Secret.
-5. Run the wizard: `python3 -m tinytuya wizard`. Give it the Access ID, Secret, one device_id (visible in the linked devices list) and your region. It scans your LAN, matches devices, and writes `devices.json` with device_id, local_key and ip for every bulb.
-6. Copy those three values into `config.json`.
+1. Pair the bulb with the Tuya Smart app. If the bulb currently lives in the Halonix OEM app, remove it there first and re-pair in Tuya Smart. The account link QR flow below works reliably with Tuya's own apps and is hit or miss with OEM skins. To re-pair: remove device, flip the wall switch off and on three times about a second apart until the bulb blinks fast, then Add Device in the app and give it your 2.4GHz WiFi. Do not skip the WiFi step or the bulb pairs over Bluetooth only and never joins your LAN.
+2. Create a free account at https://iot.tuya.com and create a Cloud project (Smart Home type). Pick the data center matching your app account region (India for Indian accounts) or the device list comes back empty.
+3. In the project, enable the core APIs (IoT Core, Authorization) and link your app account: Devices tab, Link App Account, Add App Account. If it asks for a bundle identifier, Tuya Smart is `com.tuya.smart` and Smart Life is `com.tuya.smartlife`. Scan the QR with the app (Me tab, scan icon top right). The QR expires in about a minute, refresh as needed.
+4. Note the project's Access ID and Access Secret from the Overview tab.
+5. Run the wizard: `./venv/bin/python -m tinytuya wizard`. Give it the Access ID, Secret and your region (`in` for India). It pulls the device list, scans your LAN, and writes `devices.json` with device_id, local_key and ip for every bulb.
+6. Copy those three values into `config.json`, plus the `version` it reports as `protocol_version`.
 
-Give the bulb a static IP (DHCP reservation on your router) or the ip in config will drift.
+Give the bulb a static IP (DHCP reservation on your router) or the ip in config will drift and glow dies silently.
+
+Two warnings from real use. Never re-pair the bulb once this works, because re-pairing regenerates the local_key and kills your config. And if `tinytuya scan` finds nothing, that is not fatal: mesh routers (TP-Link Deco among them) often swallow the UDP discovery broadcasts. Find the bulb by probing TCP port 6668 across your subnet instead; a Tuya device is the only thing that listens there.
 
 ## Install
 
@@ -44,10 +46,13 @@ cd ~/checkouts/claude-glow
 ./setup.sh
 ```
 
+setup.sh creates a `venv/` and installs into it, because Homebrew's Python refuses system-wide pip installs (PEP 668). Everything below and every hook command runs through `./venv/bin/python`, never bare `python3`.
+
 Or manually:
 
 ```bash
-pip3 install -r requirements.txt
+python3 -m venv venv
+./venv/bin/pip install -r requirements.txt
 cp config.example.json config.json
 # fill in device_id, local_key, ip
 ```
@@ -55,9 +60,9 @@ cp config.example.json config.json
 ## Test it
 
 ```bash
-python3 glow.py test        # cycles idle, thinking, tool-done, waiting, error
-python3 glow.py waiting     # single state
-python3 glow.py off
+./venv/bin/python glow.py test        # cycles idle, thinking, tool-done, waiting, error
+./venv/bin/python glow.py waiting     # single state
+./venv/bin/python glow.py off
 ```
 
 If config is missing or the bulb is unreachable, glow.py logs a clear message to stderr and exits 0. It never throws a traceback at a calling hook and never blocks for more than a couple of seconds (1.5s socket timeout, single retry, fire-and-forget packets).
@@ -87,6 +92,8 @@ There is no built-in error hook event in Claude Code, so the `error` state is th
 
 ## Troubleshooting
 
-Bulb does nothing, no error: wrong protocol_version, or another app holds the bulb's single local connection. Close the Smart Life app.
+Bulb does nothing, no error: wrong protocol_version, or another app holds the bulb's single local connection. Close the Tuya app.
+"Bulb not configured, cannot get device capabilities": tinytuya could not detect the bulb's DPS layout. glow.py probes status() once on connect and falls back to type B (DPS 20 to 26, which Halonix uses). If your bulb is the older type A, set `"bulb_type": "A"` in config.json.
 "no config found": copy config.example.json to config.json and fill it in.
 Wrong colors: Tuya bulbs vary in color rendering at low brightness. Tune the `colors` block.
+Glow stopped working weeks later: the bulb's IP moved. Reserve it in your router's DHCP, update config.json.
