@@ -15,7 +15,7 @@ import subprocess
 import sys
 import time
 
-STATES = ("idle", "thinking", "tool-done", "waiting", "error", "off", "test", "_pulse")
+STATES = ("idle", "thinking", "tool-done", "waiting", "error", "off", "test", "demo", "_pulse")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
@@ -194,6 +194,41 @@ def do_test(bulb, cfg):
     set_color(bulb, get_color(cfg, "idle"))
 
 
+DEMO_SCRIPT = [
+    ("idle",      2.5, "session idle, Claude is asleep"),
+    ("thinking",  2.5, "you asked for something, tool spinning up"),
+    ("tool-done", 2.5, "tool finished, results in"),
+    ("thinking",  1.2, "another tool"),
+    ("tool-done", 1.2, "done"),
+    ("thinking",  0.8, "another"),
+    ("tool-done", 0.8, "done"),
+    ("waiting",   None, "Claude needs YOU (pulsing)"),
+    ("error",     2.5, "something broke"),
+    ("idle",      2.5, "back to sleep"),
+]
+
+
+def do_demo(bulb, cfg, loops=2):
+    """Slow, narrated state cycle paced for screen-recording a GIF."""
+    for n in range(loops):
+        print("--- demo loop %d/%d ---" % (n + 1, loops))
+        for state, hold, caption in DEMO_SCRIPT:
+            print("%-9s  %s" % (state, caption))
+            color = get_color(cfg, state)
+            if state == "waiting":
+                dim = dict(color, v=max(10, int(color["v"]) // 5))
+                for _ in range(4):
+                    set_color(bulb, dim)
+                    time.sleep(0.4)
+                    set_color(bulb, color)
+                    time.sleep(0.4)
+            else:
+                set_color(bulb, color)
+                time.sleep(hold)
+    print("demo over, resting at idle")
+    set_color(bulb, get_color(cfg, "idle"))
+
+
 def main():
     if len(sys.argv) != 2 or sys.argv[1] not in STATES:
         log("usage: python3 glow.py <%s>" % "|".join(s for s in STATES if not s.startswith("_")))
@@ -215,6 +250,8 @@ def main():
             bulb.turn_off(nowait=True)
         elif state == "test":
             do_test(bulb, cfg)
+        elif state == "demo":
+            do_demo(bulb, cfg)
         elif state == "waiting":
             do_waiting(bulb, get_color(cfg, state))
         elif state == "_pulse":
