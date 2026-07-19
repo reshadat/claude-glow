@@ -72,6 +72,18 @@ def connect(cfg):
         bulb.set_socketTimeout(float(cfg.get("socket_timeout", 1.5)))
         bulb.set_socketRetryLimit(1)
         bulb.set_socketPersistent(True)
+        # BulbDevice must know its DPS layout before set_hsv; nowait packets
+        # skip auto-detection, so probe once (cheap on LAN) and fall back to
+        # the configured bulb type (Halonix uses DPS 20-26 = type "B").
+        try:
+            bulb.status()
+        except Exception:
+            pass
+        if not getattr(bulb, "bulb_configured", True):
+            try:
+                bulb.set_bulb_type(cfg.get("bulb_type", "B"))
+            except Exception:
+                pass
         return bulb
     except Exception as e:
         log("could not set up bulb connection: %s. Doing nothing." % e)

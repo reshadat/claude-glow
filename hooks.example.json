@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/checkouts/claude-glow/glow.py thinking",
+            "command": "~/checkouts/claude-glow/venv/bin/python ~/checkouts/claude-glow/glow.py thinking",
             "timeout": 10
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/checkouts/claude-glow/glow.py tool-done",
+            "command": "~/checkouts/claude-glow/venv/bin/python ~/checkouts/claude-glow/glow.py tool-done",
             "timeout": 10
           }
         ]
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/checkouts/claude-glow/glow.py waiting",
+            "command": "~/checkouts/claude-glow/venv/bin/python ~/checkouts/claude-glow/glow.py waiting",
             "timeout": 10
           }
         ]
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/checkouts/claude-glow/glow.py idle",
+            "command": "~/checkouts/claude-glow/venv/bin/python ~/checkouts/claude-glow/glow.py idle",
             "timeout": 10
           }
         ]
