@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="120" viewBox="0 0 560 120">
+  <defs>
+    <radialGradient id="core" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fef3c7"/>
+      <stop offset="0.55" stop-color="#f59e0b"/>
+      <stop offset="1" stop-color="#d97706"/>
+    </radialGradient>
+  </defs>
+  <g>
+    <g transform="rotate(0 72 60)"><rect x="67" y="8" width="10" height="20" rx="5" fill="#f59e0b"/></g>
+    <g transform="rotate(45 72 60)"><rect x="67" y="12" width="10" height="16" rx="5" fill="#ef4444"/></g>
+    <g transform="rotate(90 72 60)"><rect x="67" y="8" width="10" height="20" rx="5" fill="#3b82f6"/></g>
+    <g transform="rotate(135 72 60)"><rect x="67" y="12" width="10" height="16" rx="5" fill="#22c55e"/></g>
+    <g transform="rotate(180 72 60)"><rect x="67" y="8" width="10" height="20" rx="5" fill="#f59e0b"/></g>
+    <g transform="rotate(225 72 60)"><rect x="67" y="12" width="10" height="16" rx="5" fill="#ef4444"/></g>
+    <g transform="rotate(270 72 60)"><rect x="67" y="8" width="10" height="20" rx="5" fill="#3b82f6"/></g>
+    <g transform="rotate(315 72 60)"><rect x="67" y="12" width="10" height="16" rx="5" fill="#22c55e"/></g>
+    <circle cx="72" cy="60" r="24" fill="url(#core)"/>
+  </g>
+  <text x="128" y="78" font-family="Helvetica, Arial, sans-serif" font-weight="800" font-size="52" letter-spacing="-1.5" fill="#16161a">claude-glow</text>
+</svg>

@@ -1,6 +1,21 @@
-# claude-glow
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+    <img src="assets/logo.svg" width="420" alt="claude-glow">
+  </picture>
+</p>
 
-An ambient status light for Claude Code sessions. A Halonix WiFi smart bulb changes color and brightness to reflect what Claude is doing right now. Green and dim means idle. Amber means a tool is about to run. Red and pulsing means Claude is waiting on you.
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-16161a?style=flat-square" alt="MIT">
+  <img src="https://img.shields.io/badge/python-3.9%2B-16161a?style=flat-square" alt="Python 3.9+">
+  <img src="https://img.shields.io/badge/bulb-Tuya%20%2F%20Halonix-f59e0b?style=flat-square" alt="Tuya / Halonix">
+  <img src="https://img.shields.io/badge/control-100%25%20local%20LAN-16161a?style=flat-square" alt="Local LAN">
+  <img src="https://img.shields.io/badge/LLM%20in%20control%20loop-never-16161a?style=flat-square" alt="No LLM in loop">
+</p>
+
+<p align="center"><b>Your room tells you what Claude Code is doing.</b></p>
+
+An ambient status light for Claude Code sessions. A Tuya-based WiFi smart bulb (Halonix, Smart Life, most white-label brands) changes color and brightness to reflect what Claude is doing right now. Green and dim means idle. Amber means a tool is about to run. Red and pulsing means Claude is waiting on you.
 
 The whole pipeline is deterministic. Claude Code hook fires, runs a small Python script, script sends one packet to the bulb over your LAN. No cloud round trip after setup, no LLM in the control loop, nothing to hallucinate.
 
