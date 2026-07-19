@@ -104,12 +104,14 @@ def get_color(cfg, state):
 
 
 def set_color(bulb, color):
-    """Turn bulb on and apply HSV. nowait keeps hook latency low."""
+    """Turn bulb on and apply HSV. Blocking sends: closing the socket right
+    after a fire-and-forget packet RSTs the connection and the bulb drops the
+    command, so we pay ~100ms on the LAN for a confirmed delivery instead."""
     h = max(0.0, min(360.0, float(color["h"]))) / 360.0
     s = max(0.0, min(100.0, float(color["s"]))) / 100.0
     v = max(0.0, min(100.0, float(color["v"]))) / 100.0
     bulb.turn_on(nowait=True)
-    bulb.set_hsv(h, s, v, nowait=True)
+    bulb.set_hsv(h, s, v)
 
 
 def kill_pulser():
@@ -217,6 +219,8 @@ def main():
             do_waiting(bulb, get_color(cfg, state))
         elif state == "_pulse":
             do_pulse_loop(bulb, get_color(cfg, "waiting"))
+        else:
+            set_color(bulb, get_color(cfg, state))
     except Exception as e:
         log("bulb command failed (%s): %s. Doing nothing." % (state, e))
     finally:
