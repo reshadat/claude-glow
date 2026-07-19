@@ -15,6 +15,10 @@
 
 <p align="center"><b>Your room tells you what Claude Code is doing.</b></p>
 
+<p align="center">
+  <img src="assets/demo.gif" width="720" alt="claude-glow demo: bulb changing color with Claude Code session states">
+</p>
+
 An ambient status light for Claude Code sessions. A Tuya-based WiFi smart bulb (Halonix, Smart Life, most white-label brands) changes color and brightness to reflect what Claude is doing right now. Green and dim means idle. Amber means a tool is about to run. Red and pulsing means Claude is waiting on you.
 
 The whole pipeline is deterministic. Claude Code hook fires, runs a small Python script, script sends one packet to the bulb over your LAN. No cloud round trip after setup, no LLM in the control loop, nothing to hallucinate.
