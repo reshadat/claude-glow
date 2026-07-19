@@ -10,13 +10,17 @@ Designed to never break a calling hook: all failures log to stderr and exit 0.
 
 import json
 import os
+import signal
+import subprocess
 import sys
 import time
 
-STATES = ("idle", "thinking", "tool-done", "waiting", "error", "off", "test")
+STATES = ("idle", "thinking", "tool-done", "waiting", "error", "off", "test", "_pulse")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
+PIDFILE = os.path.join(BASE_DIR, ".pulser.pid")
+PULSE_MAX_SECONDS = 300
 
 # HSV: h 0-360, s 0-100, v 0-100. Overridable per state via config.json "colors".
 DEFAULT_COLORS = {
@@ -108,15 +112,50 @@ def set_color(bulb, color):
     bulb.set_hsv(h, s, v, nowait=True)
 
 
-def do_waiting(bulb, color):
-    """Pulse red a few times, end bright. Total ~1.5s; fine because the
-    Notification hook fires when Claude is already idle waiting on the user."""
+def kill_pulser():
+    """Stop a background pulser from a previous 'waiting' state, if any."""
+    try:
+        with open(PIDFILE) as f:
+            pid = int(f.read().strip())
+        os.kill(pid, signal.SIGTERM)
+    except (OSError, ValueError):
+        pass
+    try:
+        os.remove(PIDFILE)
+    except OSError:
+        pass
+
+
+def start_pulser():
+    """Spawn a detached child running the _pulse loop and record its pid.
+    The parent returns immediately so the calling hook never blocks."""
+    with open(os.devnull, "wb") as devnull:
+        proc = subprocess.Popen(
+            [sys.executable, os.path.abspath(__file__), "_pulse"],
+            stdout=devnull, stderr=devnull,
+            start_new_session=True,
+        )
+    with open(PIDFILE, "w") as f:
+        f.write(str(proc.pid))
+
+
+def do_pulse_loop(bulb, color):
+    """Continuous dim/bright pulse until killed by the next state change,
+    capped at PULSE_MAX_SECONDS so an abandoned session can't strobe all night.
+    Ends bright so a timed-out pulse still leaves the 'come look' color."""
     dim = dict(color, v=max(10, int(color["v"]) // 5))
-    for _ in range(3):
+    deadline = time.time() + PULSE_MAX_SECONDS
+    while time.time() < deadline:
         set_color(bulb, dim)
-        time.sleep(0.25)
+        time.sleep(0.4)
         set_color(bulb, color)
-        time.sleep(0.25)
+        time.sleep(0.4)
+
+
+def do_waiting(bulb, color):
+    """Show bright red immediately, then hand off to a background pulser."""
+    set_color(bulb, color)
+    start_pulser()
 
 
 def do_test(bulb, cfg):
@@ -124,7 +163,14 @@ def do_test(bulb, cfg):
     for state in sequence:
         print("claude-glow test: %s" % state)
         if state == "waiting":
-            do_waiting(bulb, get_color(cfg, state))
+            # inline short pulse; the background pulser is for real hooks only
+            color = get_color(cfg, state)
+            dim = dict(color, v=max(10, int(color["v"]) // 5))
+            for _ in range(3):
+                set_color(bulb, dim)
+                time.sleep(0.4)
+                set_color(bulb, color)
+                time.sleep(0.4)
         else:
             set_color(bulb, get_color(cfg, state))
         time.sleep(1.0)
@@ -134,10 +180,13 @@ def do_test(bulb, cfg):
 
 def main():
     if len(sys.argv) != 2 or sys.argv[1] not in STATES:
-        log("usage: python3 glow.py <%s>" % "|".join(STATES))
+        log("usage: python3 glow.py <%s>" % "|".join(s for s in STATES if not s.startswith("_")))
         return 0  # never fail the calling hook, even on bad args
 
     state = sys.argv[1]
+    if state != "_pulse":
+        # any state change silences a leftover pulser first
+        kill_pulser()
     cfg = load_config()
     if cfg is None:
         return 0
@@ -152,8 +201,8 @@ def main():
             do_test(bulb, cfg)
         elif state == "waiting":
             do_waiting(bulb, get_color(cfg, state))
-        else:
-            set_color(bulb, get_color(cfg, state))
+        elif state == "_pulse":
+            do_pulse_loop(bulb, get_color(cfg, "waiting"))
     except Exception as e:
         log("bulb command failed (%s): %s. Doing nothing." % (state, e))
     finally:
